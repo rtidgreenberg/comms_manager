@@ -1,0 +1,830 @@
+<?xml version="1.0"?>
+
+<dds xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="http://community.rti.com/schema/7.3.0/rti_dds_qos_profiles.xsd">
+
+
+  <!-- comms QOS Library -->
+  <qos_library name="comms_qos_lib">
+
+    <!-- ROUTING SERVICE QOS V10 -->
+
+    <qos_profile name="xml_logging_control" is_default_participant_factory_profile="true">
+
+      <participant_factory_qos>
+        <!-- Can control logging verbosity here for all apps using this QOS File -->
+        <logging>
+          <verbosity>WARNING</verbosity>
+          <category>ALL</category>
+          <print_format>DEBUG</print_format>
+          <!-- <output_file>router_dbg</output_file> -->
+        </logging>
+      </participant_factory_qos>
+    </qos_profile>
+
+    <qos_profile name="periodic_1hz_best_effort_qos"
+      base_name="BuiltinQosLib::Pattern.PeriodicData">
+
+      <!--  Reliability: BEST EFFORT
+            Durability: VOLATILE
+            Liveliness: INF
+            Deadline: DW (4), DR(10) -->
+
+      <!-- This profile is intended for Periodic "STAT" data. These messages should all be getting
+      downsampled to 1HZ at the readers of the COMMS domain -->
+
+      <datareader_qos>
+        <!-- We want to downsample on the reader for the Comms Domain to lower the data rate -->
+        <time_based_filter>
+          <minimum_separation>
+            <sec>1</sec>
+            <nanosec>0</nanosec>
+          </minimum_separation>
+        </time_based_filter>
+
+        <!-- KEEP_LAST ensures older data will get overwritten. Depth: 10 = Cache/Buffer -->
+        <history>
+          <kind>KEEP_LAST_HISTORY_QOS</kind>
+          <depth>10</depth>
+        </history>
+
+      </datareader_qos>
+
+
+    </qos_profile>
+
+    <qos_profile name="aperiodic_durable_reliable_qos"
+      base_name="BuiltinQosLib::Pattern.LastValueCache">
+      <!-- This QOS profile is intended for aperiodic messages that we need to ensure get delivered. -->
+
+      <!--  Reliability: RELIABLE
+            Durability: TRANSIENT LOCAL
+            History: KEEP LAST
+            Depth: 1
+            Liveliness: INF
+            Deadline: INF -->
+
+      <datawriter_qos>
+
+        <!-- This spins up a separate thread to send out samples asynchronously -->
+        <publish_mode>
+          <kind>ASYNCHRONOUS_PUBLISH_MODE_QOS</kind>
+          <flow_controller_name>DDS_FIXED_RATE_FLOW_CONTROLLER_NAME</flow_controller_name>
+        </publish_mode>
+
+        <!-- Slow down heartbeats for user traffic -->
+        <protocol>
+          <rtps_reliable_writer>
+            <low_watermark>0</low_watermark>
+            <high_watermark>1</high_watermark>
+            <heartbeat_period>
+              <sec>3</sec>
+              <nanosec>0</nanosec>
+            </heartbeat_period>
+            <fast_heartbeat_period>
+              <sec>3</sec>
+              <nanosec>0</nanosec>
+            </fast_heartbeat_period>
+            <late_joiner_heartbeat_period>
+              <sec>3</sec>
+              <nanosec>0</nanosec>
+            </late_joiner_heartbeat_period>
+            <max_heartbeat_retries>1000</max_heartbeat_retries>
+            <heartbeats_per_max_samples>0</heartbeats_per_max_samples>
+            <min_nack_response_delay>
+              <sec>0</sec>
+              <nanosec>0</nanosec>
+            </min_nack_response_delay>
+            <max_nack_response_delay>
+              <sec>0</sec>
+              <nanosec>0</nanosec>
+            </max_nack_response_delay>
+          </rtps_reliable_writer>
+        </protocol>
+
+      </datawriter_qos>
+
+      <datareader_qos>
+        <protocol>
+          <rtps_reliable_reader>
+            <max_heartbeat_response_delay>
+              <sec>0</sec>
+              <nanosec>0</nanosec>
+            </max_heartbeat_response_delay>
+            <min_heartbeat_response_delay>
+              <sec>0</sec>
+              <nanosec>0</nanosec>
+            </min_heartbeat_response_delay>
+          </rtps_reliable_reader>
+        </protocol>
+      </datareader_qos>
+
+    </qos_profile>
+
+    <qos_profile name="aperiodic_non_durable_reliable_qos"
+      base_name="BuiltinQosLib::Pattern.ReliableStreaming">
+      <!-- This QOS profile is intended for aperiodic messages that we need to ensure get delivered. -->
+
+      <!--  Reliability: RELIABLE
+            Durability: TRANSIENT
+            History: KEEP LAST
+            Depth: 100
+            Liveliness: INF
+            Deadline: INF -->
+
+      <datawriter_qos>
+
+        <!-- This spins up a separate thread to send out samples asynchronously -->
+        <publish_mode>
+          <kind>ASYNCHRONOUS_PUBLISH_MODE_QOS</kind>
+          <flow_controller_name>DDS_FIXED_RATE_FLOW_CONTROLLER_NAME</flow_controller_name>
+        </publish_mode>
+
+        <!-- Slow down heartbeats for user traffic -->
+        <protocol>
+          <rtps_reliable_writer>
+            <low_watermark>0</low_watermark>
+            <high_watermark>1</high_watermark>
+            <heartbeat_period>
+              <sec>3</sec>
+              <nanosec>0</nanosec>
+            </heartbeat_period>
+            <fast_heartbeat_period>
+              <sec>3</sec>
+              <nanosec>0</nanosec>
+            </fast_heartbeat_period>
+            <late_joiner_heartbeat_period>
+              <sec>3</sec>
+              <nanosec>0</nanosec>
+            </late_joiner_heartbeat_period>
+            <max_heartbeat_retries>1000</max_heartbeat_retries>
+            <heartbeats_per_max_samples>0</heartbeats_per_max_samples>
+            <min_nack_response_delay>
+              <sec>0</sec>
+              <nanosec>0</nanosec>
+            </min_nack_response_delay>
+            <max_nack_response_delay>
+              <sec>0</sec>
+              <nanosec>0</nanosec>
+            </max_nack_response_delay>
+          </rtps_reliable_writer>
+        </protocol>
+      </datawriter_qos>
+
+      <datareader_qos>
+        <protocol>
+          <rtps_reliable_reader>
+            <max_heartbeat_response_delay>
+              <sec>0</sec>
+              <nanosec>0</nanosec>
+            </max_heartbeat_response_delay>
+            <min_heartbeat_response_delay>
+              <sec>0</sec>
+              <nanosec>0</nanosec>
+            </min_heartbeat_response_delay>
+          </rtps_reliable_reader>
+        </protocol>
+      </datareader_qos>
+
+    </qos_profile>
+
+    <qos_profile name="topic_assign_qos">
+
+      <!-- 
+      
+      We can use the Topic suffixes to automatically assign QOS using the "topic_filter" tag.
+
+      All the datawriters/datareaders are assigned to this qos
+      Then depending on their suffix the selected QOS will be applied.
+
+      These filters will need to be defined based on the behavior of data going over the Topics 
+      
+      -->
+
+      <datawriter_qos topic_filter="*Command" base_name="aperiodic_durable_reliable_qos" />
+      <datareader_qos topic_filter="*Command" base_name="aperiodic_durable_reliable_qos" />
+
+      <datawriter_qos topic_filter="*CommandAck" base_name="aperiodic_durable_reliable_qos" />
+      <datareader_qos topic_filter="*CommandAck" base_name="aperiodic_durable_reliable_qos" />
+
+      <datawriter_qos topic_filter="*Status" base_name="periodic_1hz_best_effort_qos" />
+      <datareader_qos topic_filter="*Status" base_name="periodic_1hz_best_effort_qos" />
+
+
+    </qos_profile>
+
+    <qos_profile name="comms_qos">
+
+      <!-- This profile is just for the Comms Domain Participant -->
+      <domain_participant_qos>
+        <!-- This profile is intended for use across the network comms link. 
+        This assumes an instance of RTI's routing service is on both ends and is using Connext 7.3.0 -->
+
+        <!-- Minimizes participant discovery packets -->
+        <base_name>
+          <element>BuiltinQosSnippetLib::Optimization.Discovery.Participant.Compact</element>
+        </base_name>
+
+        <!-- Select only the UDP transport/ Disable SHMEM -->
+        <transport_builtin>
+          <mask>UDPv4</mask>
+        </transport_builtin>
+
+        <discovery_config>
+          <!-- This is the amount of messages broadcast on startup to announce a participants
+          presence. 
+          DEFAULT: 5.
+        This can cause issues when many participants are "announcing" themselves at the same time. -->
+          <initial_participant_announcements>3</initial_participant_announcements>
+
+          <!-- Use new SPDP2 with optimized discovery sequence. This needs to be Connext 7.3 on both
+          ends- Disabled until verified/tested -->
+          <!-- <builtin_discovery_plugins>SPDP2 | SEDP</builtin_discovery_plugins> -->
+
+          <!-- Adjust how often applications will assert their presence here per requirements
+          For SPDP2 this is just a "heartbeat" to maintain the platform's presence on the databus.
+          These are very lightweight messages but period can be extended to optimize network usage.
+          DEFAULT: 30 secs -->
+          <participant_liveliness_assert_period>
+            <sec>6000</sec>
+            <!-- nanosec defaults to infinite- ensure a value is always set -->
+            <nanosec>0</nanosec>
+          </participant_liveliness_assert_period>
+
+          <!-- This is the timeout period by which other applications will consider this platform to
+          be "offline" 
+          Must be > participant_liveliness_assert_period
+          If you are getting a lot of timeout's due to lossy comms this can be extended to minimize
+          re-discovery events.
+          DEFAULT: 100 secs -->
+          <participant_liveliness_lease_duration>
+            <sec>12000</sec>
+            <nanosec>0</nanosec>
+          </participant_liveliness_lease_duration>
+
+          <!-- The maximum amount of time between when a remote entity stops maintaining its 
+           liveliness and when the matched local entity realizes that fact.
+           i.e. how often the event thread check's if it is still there
+           DEFAULT: 60 secs -->
+          <max_liveliness_loss_detection_period>
+            <sec>3000</sec>
+            <nanosec>0</nanosec>
+          </max_liveliness_loss_detection_period>
+
+          <!-- Slow down all discovery heartbeats -->
+          <publication_writer>
+            <low_watermark>0</low_watermark>
+            <high_watermark>1</high_watermark>
+            <heartbeat_period>
+              <sec>3</sec>
+              <nanosec>0</nanosec>
+            </heartbeat_period>
+            <fast_heartbeat_period>
+              <sec>3</sec>
+              <nanosec>0</nanosec>
+            </fast_heartbeat_period>
+            <late_joiner_heartbeat_period>
+              <sec>3</sec>
+              <nanosec>0</nanosec>
+            </late_joiner_heartbeat_period>
+            <max_heartbeat_retries>1000</max_heartbeat_retries>
+            <heartbeats_per_max_samples>0</heartbeats_per_max_samples>
+            <min_nack_response_delay>
+              <sec>0</sec>
+              <nanosec>0</nanosec>
+            </min_nack_response_delay>
+            <max_nack_response_delay>
+              <sec>0</sec>
+              <nanosec>0</nanosec>
+            </max_nack_response_delay>
+          </publication_writer>
+          <subscription_writer>
+            <low_watermark>0</low_watermark>
+            <high_watermark>1</high_watermark>
+            <heartbeat_period>
+              <sec>3</sec>
+              <nanosec>0</nanosec>
+            </heartbeat_period>
+            <fast_heartbeat_period>
+              <sec>3</sec>
+              <nanosec>0</nanosec>
+            </fast_heartbeat_period>
+            <late_joiner_heartbeat_period>
+              <sec>3</sec>
+              <nanosec>0</nanosec>
+            </late_joiner_heartbeat_period>
+            <max_heartbeat_retries>1000</max_heartbeat_retries>
+            <heartbeats_per_max_samples>0</heartbeats_per_max_samples>
+            <min_nack_response_delay>
+              <sec>0</sec>
+              <nanosec>0</nanosec>
+            </min_nack_response_delay>
+            <max_nack_response_delay>
+              <sec>0</sec>
+              <nanosec>0</nanosec>
+            </max_nack_response_delay>
+          </subscription_writer>
+          <publication_reader>
+            <min_heartbeat_response_delay>
+              <sec>0</sec>
+              <nanosec>0</nanosec>
+            </min_heartbeat_response_delay>
+            <max_heartbeat_response_delay>
+              <sec>0</sec>
+              <nanosec>0</nanosec>
+            </max_heartbeat_response_delay>
+          </publication_reader>
+          <subscription_reader>
+            <min_heartbeat_response_delay>
+              <sec>0</sec>
+              <nanosec>0</nanosec>
+            </min_heartbeat_response_delay>
+            <max_heartbeat_response_delay>
+              <sec>0</sec>
+              <nanosec>0</nanosec>
+            </max_heartbeat_response_delay>
+          </subscription_reader>
+        </discovery_config>
+
+        <!-- Set message size to default MTU to shift fragmentation to the DDS layer and 
+        out of the NIC. -->
+        <!-- <property>
+          <value>
+            <element>
+              <name>dds.transport.UDPv4.builtin.parent.message_size_max</name>
+              <value>1450</value>
+            </element>
+          </value>
+        </property> -->
+
+        <!-- Even though we set the outgoing UDP messages to be > 1450 we still want to be able to
+        get 
+         larger messages from other Participants that are not configured the same -->
+        <!-- <receiver_pool>
+          <buffer_size>65507</buffer_size>
+        </receiver_pool> -->
+
+        <!-- Disable Types being propagated during discovery- The types get propagated across
+        routing service from the other Participants-->
+        <resource_limits>
+          <type_code_max_serialized_length>0</type_code_max_serialized_length>
+          <type_object_max_serialized_length>0</type_object_max_serialized_length>
+        </resource_limits>
+
+      </domain_participant_qos>
+
+      <!-- Assign QOS per topic -->
+      <datawriter_qos base_name="comms_qos_lib::topic_assign_qos" />
+      <datareader_qos base_name="comms_qos_lib::topic_assign_qos" />
+
+    </qos_profile>
+
+    <qos_profile name="platform_qos">
+      <!-- This profile is intended for internal messaging to the Platform Domain. 
+        This will need to be compatible with QOS profiles used on the Platform Domain. -->
+
+      <domain_participant_qos>
+        <property>
+          <value>
+            <element>
+              <name>dds.transport.UDPv4.builtin.multicast_ttl</name>
+              <value>6</value>
+            </element>
+          </value>
+        </property>
+
+        <resource_limits>
+          <!-- Increase the default for some of the larger types i.e.
+          RouteObjectiveTypeWaypointsListElement and ContactReportTypeContactsSetElement-->
+          <type_object_max_serialized_length>100000</type_object_max_serialized_length>
+
+        </resource_limits>
+
+        <discovery_config>
+          <publication_writer_publish_mode>
+            <kind>ASYNCHRONOUS_PUBLISH_MODE_QOS</kind>
+          </publication_writer_publish_mode>
+          <subscription_writer_publish_mode>
+            <kind>ASYNCHRONOUS_PUBLISH_MODE_QOS</kind>
+          </subscription_writer_publish_mode>
+        </discovery_config>
+      </domain_participant_qos>
+
+      <!-- Define DataWriter QOS here to ensure matching with Plaform QOS settings -->
+      <datawriter_qos>
+        <!-- RELIABLE ensures samples will be sent out again if they were not received -->
+        <reliability>
+          <kind>RELIABLE_RELIABILITY_QOS</kind>
+        </reliability>
+
+        <history>
+          <!-- KEEP_LAST ensures older data will get overwritten -->
+          <kind>KEEP_LAST_HISTORY_QOS</kind>
+
+          <!-- 
+          We can decouple the cache value used for reliability and durability by setting them seperately.
+          * history.depth = Size of cache for Reliable samples
+          * durability.writer_depth = Last x samples to be resent for late joiners
+          -->
+          <depth>1</depth>
+        </history>
+
+        <!-- TRANSIENT_LOCAL persists samples on the writer side to be resent to late joining
+        readers -->
+        <durability>
+          <kind>TRANSIENT_LOCAL_DURABILITY_QOS</kind>
+
+          <!-- This was enabled in 6.1.x -->
+          <writer_depth>1</writer_depth>
+        </durability>
+
+        <!-- This spins up a separate thread to send out samples asynchronously -->
+        <publish_mode>
+          <kind>ASYNCHRONOUS_PUBLISH_MODE_QOS</kind>
+          <flow_controller_name>DDS_FIXED_RATE_FLOW_CONTROLLER_NAME</flow_controller_name>
+        </publish_mode>
+
+      </datawriter_qos>
+
+      <!-- Donwsampling high rate on the Platform reader side -->
+      <!-- QOS overrides per Topic name -->
+      <datareader_qos topic_filter="*GlobalPoseReport*">
+        <durability>
+          <kind>VOLATILE_DURABILITY_QOS</kind>
+        </durability>
+        <reliability>
+          <kind>BEST_EFFORT_RELIABILITY_QOS</kind>
+        </reliability>
+        <time_based_filter>
+          <minimum_separation>
+            <sec>1</sec>
+            <nanosec>0</nanosec>
+          </minimum_separation>
+        </time_based_filter>
+      </datareader_qos>
+      <datareader_qos topic_filter="*SpeedReport*">
+        <durability>
+          <kind>VOLATILE_DURABILITY_QOS</kind>
+        </durability>
+        <reliability>
+          <kind>BEST_EFFORT_RELIABILITY_QOS</kind>
+        </reliability>
+        <time_based_filter>
+          <minimum_separation>
+            <sec>1</sec>
+            <nanosec>0</nanosec>
+          </minimum_separation>
+        </time_based_filter>
+      </datareader_qos>
+    </qos_profile>
+
+    <qos_profile name="c2_qos">
+      <participant_qos>
+
+        <discovery_config>
+
+          <!-- We set this to asynchronous discovery to handle the larger type objects -->
+          <publication_writer_publish_mode>
+            <kind>ASYNCHRONOUS_PUBLISH_MODE_QOS</kind>
+          </publication_writer_publish_mode>
+          <subscription_writer_publish_mode>
+            <kind>ASYNCHRONOUS_PUBLISH_MODE_QOS</kind>
+          </subscription_writer_publish_mode>
+        </discovery_config>
+
+
+        <resource_limits>
+          <!-- This needs to be increased as some of the type objects are > 60k -->
+          <type_object_max_serialized_length>100000</type_object_max_serialized_length>
+
+        </resource_limits>
+        <property>
+          <value>
+            <element>
+              <name>dds.transport.UDPv4.builtin.multicast_ttl</name>
+              <!-- This TTL should only reflect hops from the CCS Router to the ret of the CCS
+              applications -->
+              <value>2</value>
+            </element>
+            <!-- <element>
+                      <name>dds.transport.UDPv4.builtin.parent.message_size_max</name>
+                      <value>576</value>
+                  </element> -->
+          </value>
+        </property>
+        <!-- <discovery> -->
+        <!-- Configure the destinatons of disovery announcements. Do not list any multicast
+        addresses -->
+        <!--This
+        is the list of transports destinations where the participant will announce its presence -->
+        <!--            <initial_peers> -->
+        <!-- use shared memory for participants the same computer -->
+        <!-- <element>20@builtin.shmem://</element> -->
+        <!-- also use IP loopback for participants the same computer -->
+        <!--            <element>20@builtin.udpv4://127.0.0.1</element> -->
+        <!-- Increase max number of domain participants (default is 4) -->
+        <!-- https://community.rti.com/kb/do-i-need-set-max-participant-index-peers-list -->
+        <!--    </initial_peers> -->
+        <!--  </discovery> -->
+      </participant_qos>
+
+      <datawriter_qos>
+        <property>
+          <value>
+            <element>
+              <name>dds.data_writer.history.memory_manager.fast_pool.pool_buffer_max_size</name>
+              <value>2048</value>
+            </element>
+          </value>
+        </property>
+        <!-- <writer_resource_limits>
+              Used to configure piggybacks w/ batching; see below
+              <max_batches>20</max_batches>
+          </writer_resource_limits> -->
+        <!-- <protocol>
+              <rtps_reliable_writer>
+                  <heartbeats_per_max_samples>20</heartbeats_per_max_samples>
+              </rtps_reliable_writer>
+          </protocol> -->
+        <durability>
+          <kind>TRANSIENT_LOCAL_DURABILITY_QOS</kind>
+        </durability>
+        <reliability>
+          <kind>RELIABLE_RELIABILITY_QOS</kind>
+        </reliability>
+        <history>
+          <kind>KEEP_LAST_HISTORY_QOS</kind>
+        </history>
+
+        <writer_data_lifecycle>
+
+          <!-- Leave instaces around for a bit so the can synchronize state later re: intermittent
+          connection -->
+          <autopurge_disposed_instances_delay>
+            <sec>300</sec>
+            <nanosec>DURATION_ZERO_NSEC</nanosec>
+          </autopurge_disposed_instances_delay>
+
+          <!-- Commenting out below as Applications SHOULD be using the dispose function per comms
+          standard -->
+
+          <!-- <autodispose_unregistered_instances>true</autodispose_unregistered_instances>
+          <autopurge_unregistered_instances_delay>
+            <sec>100</sec>
+            <nanosec>DURATION_ZERO_NSEC</nanosec>
+          </autopurge_unregistered_instances_delay> -->
+        </writer_data_lifecycle>
+
+        <!-- <resource_limits>
+              <max_samples_per_instance>20</max_samples_per_instance>
+              <initial_samples>100</initial_samples>
+              <initial_instances>10</initial_instances>
+          </resource_limits> -->
+
+        <!-- Needs to be Asynchronous mode for the large comms messages -->
+        <publish_mode>
+          <kind>ASYNCHRONOUS_PUBLISH_MODE_QOS</kind>
+          <flow_controller_name>DDS_FIXED_RATE_FLOW_CONTROLLER_NAME</flow_controller_name>
+        </publish_mode>
+      </datawriter_qos>
+
+
+      <datareader_qos>
+        <property>
+          <value>
+            <element>
+              <name>dds.data_reader.history.memory_manager.fast_pool.pool_buffer_max_size</name>
+              <value>2048</value>
+            </element>
+          </value>
+        </property>
+        <!-- <resource_limits>
+              <max_samples_per_instance>20</max_samples_per_instance>
+              <initial_samples>100</initial_samples>
+              <initial_instances>10</initial_instances>
+          </resource_limits> -->
+        <!-- <reader_data_lifecycle>
+          <autopurge_disposed_samples_delay>
+            <sec>300</sec>
+            <nanosec>0</nanosec>
+          </autopurge_disposed_samples_delay>
+          <autopurge_disposed_instances_delay>
+            <sec>300</sec>
+            <nanosec>DURATION_ZERO_NSEC</nanosec>
+          </autopurge_disposed_instances_delay>
+        </reader_data_lifecycle> -->
+
+        <!-- Defaults -->
+        <durability>
+          <kind>TRANSIENT_LOCAL_DURABILITY_QOS</kind>
+        </durability>
+        <reliability>
+          <kind>RELIABLE_RELIABILITY_QOS</kind>
+        </reliability>
+        <history>
+          <kind>KEEP_LAST_HISTORY_QOS</kind>
+        </history>
+      </datareader_qos>
+
+      <!-- QOS overrides per Topic name -->
+      <datareader_qos topic_filter="*GlobalPoseReport*">
+        <durability>
+          <kind>VOLATILE_DURABILITY_QOS</kind>
+        </durability>
+        <reliability>
+          <kind>BEST_EFFORT_RELIABILITY_QOS</kind>
+        </reliability>
+      </datareader_qos>
+      <datareader_qos topic_filter="*SpeedReport*">
+        <durability>
+          <kind>VOLATILE_DURABILITY_QOS</kind>
+        </durability>
+        <reliability>
+          <kind>BEST_EFFORT_RELIABILITY_QOS</kind>
+        </reliability>
+      </datareader_qos>
+      <datareader_qos topic_filter="*ContactReport*">
+        <durability>
+          <kind>VOLATILE_DURABILITY_QOS</kind>
+        </durability>
+        <reliability>
+          <kind>RELIABLE_RELIABILITY_QOS</kind>
+        </reliability>
+      </datareader_qos>
+      <datareader_qos topic_filter="*ContactReportContactsSetElement*">
+        <durability>
+          <kind>VOLATILE_DURABILITY_QOS</kind>
+        </durability>
+        <reliability>
+          <kind>RELIABLE_RELIABILITY_QOS</kind>
+        </reliability>
+      </datareader_qos>
+    </qos_profile>
+
+
+    <!-- Default Remote Admin QoS:
+             
+             This profile contains the QoS that Requesters and Repliers 
+             would use by default. We can use it as a base profile to inherit
+             from and override some parameters -->
+    <qos_profile name="remote_admin_default">
+      <datawriter_qos>
+
+        <!-- Strict reliable -->
+        <reliability>
+          <kind>RELIABLE_RELIABILITY_QOS</kind>
+          <max_blocking_time>
+            <sec>10</sec>
+            <nanosec>0</nanosec>
+          </max_blocking_time>
+        </reliability>
+
+        <history>
+          <kind>KEEP_ALL_HISTORY_QOS</kind>
+        </history>
+
+        <!-- These are typical protocol parameters for a reliable
+                     DataWriter -->
+        <protocol>
+          <rtps_reliable_writer>
+            <max_heartbeat_retries>
+              LENGTH_UNLIMITED
+            </max_heartbeat_retries>
+            <heartbeats_per_max_samples>
+              2
+            </heartbeats_per_max_samples>
+            <heartbeat_period>
+              <sec>0</sec>
+              <nanosec>100000000</nanosec> <!--100ms -->
+            </heartbeat_period>
+            <fast_heartbeat_period>
+              <sec>0</sec>
+              <nanosec>10000000</nanosec> <!--10ms -->
+            </fast_heartbeat_period>
+            <late_joiner_heartbeat_period>
+              <sec>0</sec>
+              <nanosec>10000000</nanosec> <!--10ms -->
+            </late_joiner_heartbeat_period>
+            <max_nack_response_delay>
+              <sec>0</sec>
+              <nanosec>0</nanosec>
+            </max_nack_response_delay>
+            <min_nack_response_delay>
+              <sec>0</sec>
+              <nanosec>0</nanosec>
+            </min_nack_response_delay>
+            <max_send_window_size>32</max_send_window_size>
+            <min_send_window_size>32</min_send_window_size>
+          </rtps_reliable_writer>
+        </protocol>
+
+        <writer_resource_limits>
+          <!-- This setting enables efficient communication
+                         between a replier and an arbitrary number of requesters 
+                     -->
+          <max_remote_reader_filters>
+            LENGTH_UNLIMITED
+          </max_remote_reader_filters>
+        </writer_resource_limits>
+      </datawriter_qos>
+
+      <datareader_qos>
+        <!-- Strict reliable -->
+        <reliability>
+          <kind>RELIABLE_RELIABILITY_QOS</kind>
+          <max_blocking_time>
+            <sec>10</sec>
+            <nanosec>0</nanosec>
+          </max_blocking_time>
+        </reliability>
+
+        <history>
+          <kind>KEEP_ALL_HISTORY_QOS</kind>
+        </history>
+
+        <!-- These are typical protocol parameters for a reliable
+                     DataReader -->
+        <protocol>
+          <rtps_reliable_reader>
+            <max_heartbeat_response_delay>
+              <sec>0</sec>
+              <nanosec>0</nanosec>
+            </max_heartbeat_response_delay>
+            <min_heartbeat_response_delay>
+              <sec>0</sec>
+              <nanosec>0</nanosec>
+            </min_heartbeat_response_delay>
+          </rtps_reliable_reader>
+        </protocol>
+
+      </datareader_qos>
+
+    </qos_profile>
+
+    <!-- This is the profile used by the Requester. 
+             It inherits from "default", defined above, and overrides some QoS 
+             settings (durability and QoS settings related to unbounded 
+             types (recall that the service administration types are 
+             unbounded) -->
+    <qos_profile name="remote_admin_requester_qos" base_name="remote_admin_default">
+
+      <!-- QoS for the data writer that sends requests -->
+      <datawriter_qos>
+        <property>
+          <value>
+            <element>
+              <name>dds.data_writer.history.memory_manager.fast_pool.pool_buffer_max_size</name>
+              <value>16384</value>
+            </element>
+          </value>
+        </property>
+      </datawriter_qos>
+
+      <!-- QoS for the data reader that receives replies -->
+      <datareader_qos>
+        <property>
+          <value>
+            <element>
+              <name>dds.data_reader.history.memory_manager.fast_pool.pool_buffer_max_size</name>
+              <value>16384</value>
+            </element>
+          </value>
+        </property>
+      </datareader_qos>
+    </qos_profile>
+
+    <!-- This is the profile used by the Replier. 
+             It inherits from "default", defined above, and overrides some QoS 
+             settings (durability and QoS settings related to unbounded 
+             types (recall that the service administration types are 
+             unbounded) -->
+    <qos_profile name="remote_admin_replier_qos" base_name="remote_admin_default">
+
+      <!-- QoS for the data writer that sends replies -->
+      <datawriter_qos>
+        <property>
+          <value>
+            <element>
+              <name>dds.data_writer.history.memory_manager.fast_pool.pool_buffer_max_size</name>
+              <value>16384</value>
+            </element>
+          </value>
+        </property>
+      </datawriter_qos>
+
+      <!-- QoS for the data reader that receives requests -->
+      <datareader_qos>
+        <property>
+          <value>
+            <element>
+              <name>dds.data_reader.history.memory_manager.fast_pool.pool_buffer_max_size</name>
+              <value>16384</value>
+            </element>
+          </value>
+        </property>
+      </datareader_qos>
+    </qos_profile>
+
+  </qos_library>
+
+</dds>

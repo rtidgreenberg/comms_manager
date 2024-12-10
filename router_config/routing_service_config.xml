@@ -1,0 +1,417 @@
+<?xml version="1.0"?>
+<dds xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="https://community.rti.com/schema/7.3.0/rti_routing_service.xsd">
+
+
+  <!-- Can set up default config ENV variables after 6.1.14. Can override with either ENV variables
+  "export VAR=X" or command line -DVAR=X -->
+  <configuration_variables>
+    <value>
+
+      <!-- Multicast TTL -->
+      <element>
+        <name>TTL</name>
+        <value>6</value>
+      </element>
+
+      <!-- This name will either be the Platform ID or the C2 device ID depending on where this
+        is being run -->
+      <element>
+        <name>ROUTER_NAME</name>
+        <value>VEHICLE_123</value>
+      </element>
+
+      <!-- Group name can be for either Platforms or C2 units. 
+      This is just the base ID value that we will add a Prefix for PLAT/C2 below to segment traffic -->
+      <element>
+        <name>GROUP_ID</name>
+        <value>*</value>
+      </element>
+
+
+      <!-- ________________________ Domain IDS _____________________________ -->
+      <element>
+        <name>CONTROL_DOMAIN</name>
+        <value>100</value>
+      </element>
+      <element>
+        <name>PLATFORM_DOMAIN</name>
+        <value>0</value>
+      </element>
+      <element>
+        <name>COMMS_DOMAIN</name>
+        <value>1</value>
+      </element>
+      <element>
+        <name>C2_DOMAIN</name>
+        <value>2</value>
+      </element>
+      <element>
+        <name>SIM_DOMAIN</name>
+        <value>11</value>
+      </element>
+
+
+      <!-- ________________________ SWITCHES _______________________________ -->
+      <element>
+        <name>PLATFORM_MODE</name>
+        <value>false</value>
+      </element>
+      <element>
+        <name>C2_MODE</name>
+        <value>false</value>
+      </element>
+      <element>
+        <name>P2P_ENABLE</name>
+        <value>false</value>
+      </element>
+
+      <!-- This variable enables distributed logging and monitoring on the Remote Admin Service.
+      We most likely will want them disabled in a deployed environment to optimize bandwidth -->
+      <element>
+        <name>DEBUG_MODE</name>
+        <value>true</value>
+      </element>
+
+      <!-- ________________________ FILTERS ________________________________ -->
+
+      <!-- 
+          These are the filters used in the auto topic routes between domains. 
+          If there are any duplicate topic names include namespace as necessary otherwise removed with
+      wildcard for brevity.
+          NOTE: No spaces in the lists or they break silently
+        -->
+      <element>
+        <!-- This filter is intended for data coming from the PLATFORM going to the C2 -->
+        <name>PLATFORM_TO_C2_FILTER</name>
+        <value>CommsStatus,CommsCommandAck</value>
+      </element>
+      <element>
+        <!-- 
+            This filter is intended for data coming from the C2 going to the PLATFORM that is addressed to destination.parentID
+            It includes a Content Filter that will only allow messages to the matching parentID 
+          -->
+        <name>C2_TO_PLATFORM_FILTER_GUID</name>
+        <value>CommsCommand</value>
+      </element>
+
+      <!-- Update these filters below with the necessary values -->
+      <element>
+        <!-- This filter is intended for Topics we want to be made available between Platforms -->
+        <name>PLATFORM_TO_PLATFORM_FILTER</name>
+        <value>DISABLED</value>
+      </element>
+    </value>
+    
+  </configuration_variables>
+
+
+  <!--
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      DO NOT MODIFY BELOW THIS LINE. READ-ONLY. ALL CONTROL SHOULD BE DONE THROUGH THE CONFIGURATION VARIABLES ABOVE
+      
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+
+
+  <!-- Include the types used as we are disabling Type Propagation across the Comms Domain-->
+  <types xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="file:////opt/rti_connext_dds-6.0.1/bin/../resource/app/app_support/rtiddsgen/schema/rti_dds_topic_types.xsd">
+    <include file="./types/comms_types.xml" />
+    
+  </types>
+
+  <routing_service name="$(ROUTER_NAME)">
+
+    <annotation>
+      <documentation>
+        This configuration captures both routers running on either the "PLATFORM" side or the "C2" side. 
+        Enable either the Platform sessions or the C2 sessions by using the ENV variables.
+      </documentation>
+    </annotation>
+
+    <!-- The administration tag enables remote administration, and is
+            required when using Admin Console. -->
+    <administration>
+      <domain_id>$(CONTROL_DOMAIN)</domain_id>
+      <distributed_logger>
+        <enabled>$(DEBUG_MODE)</enabled>
+        <filter_level>WARNING</filter_level>
+      </distributed_logger>
+      <datareader_qos base_name="comms_qos_lib::remote_admin_replier_qos" />
+      <datawriter_qos base_name="comms_qos_lib::remote_admin_replier_qos" />
+    </administration>
+
+    <!-- This is the Monitoring configuration for all the entities in
+            this routing service, and is required when using Admin Console. -->
+    <monitoring>
+      <enabled>$(DEBUG_MODE)</enabled>
+      <!-- The domain id where to publish the monitoring information -->
+      <domain_id>$(CONTROL_DOMAIN)</domain_id>
+      <!-- How often to publish it -->
+      <status_publication_period>
+        <sec>5</sec>
+        <nanosec>0</nanosec>
+      </status_publication_period>
+
+      <!-- How often to compute statistics -->
+      <statistics_sampling_period>
+        <sec>1</sec>
+        <nanosec>0</nanosec>
+      </statistics_sampling_period>
+    </monitoring>
+
+    <domain_route name="$(ROUTER_NAME)_router" enabled="true">
+
+      <participant name="platform_participant">
+        <domain_id>$(PLATFORM_DOMAIN)</domain_id>
+        <domain_participant_qos base_name="comms_qos_lib::platform_qos">
+
+        </domain_participant_qos>
+
+
+        <!-- On the Platform side we shouldn't be disabling Type Propagation as we are on the same
+        host, so we shouldn't need to register any types -->
+      </participant>
+
+      <participant name="comms_participant">
+        <domain_id>$(COMMS_DOMAIN)</domain_id>
+        <domain_participant_qos base_name="comms_qos_lib::comms_qos">
+
+          <!-- We need to override the Multicast TTL here as ENV Variable's don't work in the QOS
+          profiles. Depending on the comms system being used we will want to modify this -->
+          <property>
+            <value>
+              <element>
+                <name>dds.transport.UDPv4.builtin.multicast_ttl</name>
+                <value>$(TTL)</value>
+              </element>
+            </value>
+          </property>
+          <partition>
+            <name>
+              <element>$(GROUP_ID)</element>
+            </name>
+          </partition>
+        </domain_participant_qos>
+
+        <!-- Types can get propagated from the other side of the "route" so we don't need to register these as long as discovery
+        is all set for the larger types (Async discovery and larger max type size. Leaving enabled as fallback -->
+
+      </participant>
+
+      <participant name="C2_participant">
+        <domain_id>$(C2_DOMAIN)</domain_id>
+        <domain_participant_qos base_name="comms_qos_lib::c2_qos" />
+
+        <!-- On the C2 side we shouldn't be disabling Type Propagation as we are on the same
+        host, so we shouldn't need to register any types -->
+      </participant>
+
+      <participant name="sim_participant">
+        <domain_id>$(SIM_DOMAIN)</domain_id>
+      </participant>
+
+
+
+      <session name="platform_to_comms" enabled="$(PLATFORM_MODE)">
+
+        <!-- This matches only PLATFORM partition subscribers -->
+        <publisher_qos>
+          <partition>
+            <name>
+              <element>PLATFORM</element>
+            </name>
+          </partition>
+        </publisher_qos>
+
+        <!-- This matches all internal Platform publishers-->
+        <subscriber_qos>
+          <partition>
+            <name>
+              <element>*</element>
+            </name>
+          </partition>
+        </subscriber_qos>
+
+
+        <!-- This route will dynamically instantiate multiple readers and writers based on the filter list. -->
+        <auto_topic_route name="p2c_route">
+          <publish_with_original_info>true</publish_with_original_info>
+          <input participant="platform_participant">
+            <allow_topic_name_filter>$(PLATFORM_TO_C2_FILTER)</allow_topic_name_filter>
+            <datareader_qos base_name="comms_qos_lib::platform_qos" />
+          </input>
+          <output participant="comms_participant">
+            <allow_topic_name_filter>$(PLATFORM_TO_C2_FILTER)</allow_topic_name_filter>
+            <datawriter_qos base_name="comms_qos_lib::comms_qos" />
+          </output>
+        </auto_topic_route>
+      </session>
+
+      <session name="comms_to_platform_guid" enabled="$(PLATFORM_MODE)">
+
+        <!-- This matches all internal Platform Subscriber partitions -->
+        <publisher_qos>
+          <partition>
+            <name>
+              <element>*</element>
+            </name>
+          </partition>
+        </publisher_qos>
+
+
+        <!-- This matches only C2 Partition Publishers -->
+        <subscriber_qos>
+          <partition>
+            <name>
+              <element>C2</element>
+            </name>
+          </partition>
+        </subscriber_qos>
+
+        <!-- This route will dynamically instantiate multiple readers and writers based on the
+        filter list. -->
+        <auto_topic_route name="c2pg_route">
+          <publish_with_original_info>true</publish_with_original_info>
+          <input participant="comms_participant">
+            <allow_topic_name_filter>$(C2_TO_PLATFORM_FILTER_GUID)</allow_topic_name_filter>
+            <datareader_qos base_name="comms_qos_lib::comms_qos" />
+          </input>
+          <output participant="platform_participant">
+            <allow_topic_name_filter>$(C2_TO_PLATFORM_FILTER_GUID)</allow_topic_name_filter>
+            <datawriter_qos base_name="comms_qos_lib::platform_qos" />
+          </output>
+        </auto_topic_route>
+
+      </session>
+
+      <!-- These sessions are enabled using remote admin service as needed -->
+      <session name="platform_to_platform" enabled="$(P2P_ENABLE)">
+
+        <!-- This keeps this data plane Platform to Platform -->
+        <publisher_qos>
+          <partition>
+            <name>
+              <element>SQUAD</element>
+            </name>
+          </partition>
+        </publisher_qos>
+
+        <subscriber_qos>
+          <partition>
+            <name>
+              <element>SQUAD</element>
+            </name>
+          </partition>
+        </subscriber_qos>
+
+        <!-- Filter Topics going from the Platform to the Comms domain -->
+        <auto_topic_route name="platform_to_comms_p2p">
+          <publish_with_original_info>true</publish_with_original_info>
+          <input participant="platform_participant">
+            <allow_topic_name_filter>$(PLATFORM_TO_PLATFORM_FILTER)</allow_topic_name_filter>
+            <datareader_qos base_name="comms_qos_lib::platform_qos" />
+          </input>
+          <output participant="comms_participant">
+            <allow_topic_name_filter>$(PLATFORM_TO_PLATFORM_FILTER)</allow_topic_name_filter>
+            <datawriter_qos base_name="comms_qos_lib::comms_qos" />
+          </output>
+        </auto_topic_route>
+
+        <!-- Filter Topics from the Comms domain going to Platform -->
+        <auto_topic_route name="comms_to_platform_p2p">
+          <publish_with_original_info>true</publish_with_original_info>
+          <input participant="comms_participant">
+            <allow_topic_name_filter>$(PLATFORM_TO_PLATFORM_FILTER)</allow_topic_name_filter>
+            <datareader_qos base_name="comms_qos_lib::comms_qos" />
+          </input>
+          <output participant="platform_participant">
+            <allow_topic_name_filter>$(PLATFORM_TO_PLATFORM_FILTER)</allow_topic_name_filter>
+            <datawriter_qos base_name="comms_qos_lib::platform_qos" />
+          </output>
+        </auto_topic_route>
+      </session>
+
+
+      <session name="C2_to_comms_guid" enabled="$(C2_MODE)">
+
+        <!-- This matches only C2 Partition Subscribers -->
+        <publisher_qos>
+          <partition>
+            <name>
+              <element>C2</element>
+            </name>
+          </partition>
+        </publisher_qos>
+
+        <!-- 
+            This matches all Publisher Partitions. 
+            Per the Input Participant which is C2, this will match all internal C2 Publisher Partitions
+        -->
+        <subscriber_qos>
+          <partition>
+            <name>
+              <element>*</element>
+            </name>
+          </partition>
+        </subscriber_qos>
+
+
+        <!-- This route will dynamically instantiate multiple readers and writers based on the
+        filter list.-->
+        <auto_topic_route name="C2_to_comms_guid">
+          <publish_with_original_info>true</publish_with_original_info>
+          <input participant="C2_participant">
+            <allow_topic_name_filter>$(C2_TO_PLATFORM_FILTER_GUID)</allow_topic_name_filter>
+            <datareader_qos base_name="comms_qos_lib::c2_qos" />
+          </input>
+          <output participant="comms_participant">
+            <allow_topic_name_filter>$(C2_TO_PLATFORM_FILTER_GUID)</allow_topic_name_filter>
+            <datawriter_qos base_name="comms_qos_lib::comms_qos" />
+          </output>
+        </auto_topic_route>
+
+      </session>
+
+      <session name="comms_to_C2_session" enabled="$(C2_MODE)">
+
+        <!-- This Matches to all internal C2 Subscribers -->
+        <publisher_qos>
+          <partition>
+            <name>
+              <element>*</element>
+            </name>
+          </partition>
+        </publisher_qos>
+
+        <!-- This Matches to just PLATFORM Publishers -->
+        <subscriber_qos>
+          <partition>
+            <name>
+              <element>PLATFORM</element>
+            </name>
+          </partition>
+        </subscriber_qos>
+
+
+        <!-- This route will dynamically instantiate multiple readers and writers based on the
+        filter list.-->
+        <auto_topic_route name="comms_to_C2">
+          <publish_with_original_info>true</publish_with_original_info>
+          <input participant="comms_participant">
+            <allow_topic_name_filter>$(PLATFORM_TO_C2_FILTER)</allow_topic_name_filter>
+            <datareader_qos base_name="comms_qos_lib::comms_qos" />
+          </input>
+          <output participant="C2_participant">
+            <allow_topic_name_filter>$(PLATFORM_TO_C2_FILTER)</allow_topic_name_filter>
+            <datawriter_qos base_name="comms_qos_lib::c2_qos" />
+          </output>
+        </auto_topic_route>
+
+      </session>
+
+      </domain_route>
+  </routing_service>
+</dds>

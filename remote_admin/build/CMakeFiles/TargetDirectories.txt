@@ -1,0 +1,3 @@
+/media/sf_VM_SHARED/RTI_SERVICES/CUSTOMERS/NSWC41/comms_manager/Deliverables/7.3_routing_service_config_v4/remote_admin/build/CMakeFiles/rebuild_cache.dir
+/media/sf_VM_SHARED/RTI_SERVICES/CUSTOMERS/NSWC41/comms_manager/Deliverables/7.3_routing_service_config_v4/remote_admin/build/CMakeFiles/edit_cache.dir
+/media/sf_VM_SHARED/RTI_SERVICES/CUSTOMERS/NSWC41/comms_manager/Deliverables/7.3_routing_service_config_v4/remote_admin/build/CMakeFiles/RemoteAdmin.dir
