@@ -28,6 +28,11 @@
         <value>*</value>
       </element>
 
+      <element>
+        <name>PLATFORM_GUID</name>
+        <value>ef32b88e6e0c49e99886ae20c28d7f3c</value>
+      </element>
+
 
       <!-- ________________________ Domain IDS _____________________________ -->
       <element>
@@ -78,7 +83,7 @@
       <!-- 
           These are the filters used in the auto topic routes between domains. 
           If there are any duplicate topic names include namespace as necessary otherwise removed with
-      wildcard for brevity.
+          wildcard for brevity.
           NOTE: No spaces in the lists or they break silently
         -->
       <element>
@@ -118,8 +123,9 @@
   <!-- Include the types used as we are disabling Type Propagation across the Comms Domain-->
   <types xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="file:////opt/rti_connext_dds-6.0.1/bin/../resource/app/app_support/rtiddsgen/schema/rti_dds_topic_types.xsd">
-    <include file="./types/comms_types.xml" />
     
+    <include file="./types/comms_types.xml"/>
+
   </types>
 
   <routing_service name="$(ROUTER_NAME)">
@@ -162,7 +168,7 @@
       </statistics_sampling_period>
     </monitoring>
 
-    <domain_route name="$(ROUTER_NAME)_router" enabled="true">
+    <domain_route name="comms_router" enabled="true">
 
       <participant name="platform_participant">
         <domain_id>$(PLATFORM_DOMAIN)</domain_id>
@@ -196,9 +202,6 @@
           </partition>
         </domain_participant_qos>
 
-        <!-- Types can get propagated from the other side of the "route" so we don't need to register these as long as discovery
-        is all set for the larger types (Async discovery and larger max type size. Leaving enabled as fallback -->
-
       </participant>
 
       <participant name="C2_participant">
@@ -217,25 +220,6 @@
 
       <session name="platform_to_comms" enabled="$(PLATFORM_MODE)">
 
-        <!-- This matches only PLATFORM partition subscribers -->
-        <publisher_qos>
-          <partition>
-            <name>
-              <element>PLATFORM</element>
-            </name>
-          </partition>
-        </publisher_qos>
-
-        <!-- This matches all internal Platform publishers-->
-        <subscriber_qos>
-          <partition>
-            <name>
-              <element>*</element>
-            </name>
-          </partition>
-        </subscriber_qos>
-
-
         <!-- This route will dynamically instantiate multiple readers and writers based on the filter list. -->
         <auto_topic_route name="p2c_route">
           <publish_with_original_info>true</publish_with_original_info>
@@ -252,25 +236,6 @@
 
       <session name="comms_to_platform_guid" enabled="$(PLATFORM_MODE)">
 
-        <!-- This matches all internal Platform Subscriber partitions -->
-        <publisher_qos>
-          <partition>
-            <name>
-              <element>*</element>
-            </name>
-          </partition>
-        </publisher_qos>
-
-
-        <!-- This matches only C2 Partition Publishers -->
-        <subscriber_qos>
-          <partition>
-            <name>
-              <element>C2</element>
-            </name>
-          </partition>
-        </subscriber_qos>
-
         <!-- This route will dynamically instantiate multiple readers and writers based on the
         filter list. -->
         <auto_topic_route name="c2pg_route">
@@ -278,6 +243,9 @@
           <input participant="comms_participant">
             <allow_topic_name_filter>$(C2_TO_PLATFORM_FILTER_GUID)</allow_topic_name_filter>
             <datareader_qos base_name="comms_qos_lib::comms_qos" />
+            <content_filter>
+              <expression>msg.destination = &amp;hex($(PLATFORM_GUID))</expression>
+            </content_filter>
           </input>
           <output participant="platform_participant">
             <allow_topic_name_filter>$(C2_TO_PLATFORM_FILTER_GUID)</allow_topic_name_filter>
@@ -289,23 +257,6 @@
 
       <!-- These sessions are enabled using remote admin service as needed -->
       <session name="platform_to_platform" enabled="$(P2P_ENABLE)">
-
-        <!-- This keeps this data plane Platform to Platform -->
-        <publisher_qos>
-          <partition>
-            <name>
-              <element>SQUAD</element>
-            </name>
-          </partition>
-        </publisher_qos>
-
-        <subscriber_qos>
-          <partition>
-            <name>
-              <element>SQUAD</element>
-            </name>
-          </partition>
-        </subscriber_qos>
 
         <!-- Filter Topics going from the Platform to the Comms domain -->
         <auto_topic_route name="platform_to_comms_p2p">
@@ -337,28 +288,6 @@
 
       <session name="C2_to_comms_guid" enabled="$(C2_MODE)">
 
-        <!-- This matches only C2 Partition Subscribers -->
-        <publisher_qos>
-          <partition>
-            <name>
-              <element>C2</element>
-            </name>
-          </partition>
-        </publisher_qos>
-
-        <!-- 
-            This matches all Publisher Partitions. 
-            Per the Input Participant which is C2, this will match all internal C2 Publisher Partitions
-        -->
-        <subscriber_qos>
-          <partition>
-            <name>
-              <element>*</element>
-            </name>
-          </partition>
-        </subscriber_qos>
-
-
         <!-- This route will dynamically instantiate multiple readers and writers based on the
         filter list.-->
         <auto_topic_route name="C2_to_comms_guid">
@@ -376,25 +305,6 @@
       </session>
 
       <session name="comms_to_C2_session" enabled="$(C2_MODE)">
-
-        <!-- This Matches to all internal C2 Subscribers -->
-        <publisher_qos>
-          <partition>
-            <name>
-              <element>*</element>
-            </name>
-          </partition>
-        </publisher_qos>
-
-        <!-- This Matches to just PLATFORM Publishers -->
-        <subscriber_qos>
-          <partition>
-            <name>
-              <element>PLATFORM</element>
-            </name>
-          </partition>
-        </subscriber_qos>
-
 
         <!-- This route will dynamically instantiate multiple readers and writers based on the
         filter list.-->
