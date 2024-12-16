@@ -65,13 +65,13 @@ class C2Sim:
           self.qos_provider.datareader_qos_from_profile(args.qos_profile)
       )
 
-    async def read_status_data(self):
+    async def read_comms_status_data(self):
       print("Waiting for Status data")
       async for data in self.comms_status_reader.take_data_async():
         print(f'- Received Status data with Session ID: {data["msg.session_id[1]"]}')
        
 
-    async def read_cmd_ack_data(self):
+    async def read_comms_cmd_ack_data(self):
       print("Waiting for CommandAck data")
       async for data in self.comms_cmd_ack_reader.take_data_async():
         print(f'- Received CommandAck data with Session ID: {data["msg.session_id[1]"]}')
@@ -107,8 +107,8 @@ class C2Sim:
     async def run(self) -> None:
         await asyncio.gather(
             self.write_comms_cmd(),
-            self.read_status_data(),
-            self.read_status_data()
+            self.read_comms_status_data(),
+            self.read_comms_cmd_ack_data()
             )
 
 
