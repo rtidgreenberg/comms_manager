@@ -86,9 +86,11 @@ class C2Sim:
       comms_cmd_sample["msg.source"] = source_guid_list
 
       # Set Destination GUID
-      dest_guid = uuid.UUID(str(args.dest_guid))
-      dest_guid_list = list(dest_guid.bytes)
-      comms_cmd_sample["msg.destination"] = dest_guid_list
+      # dest_guid = uuid.UUID(str(args.dest_guid))
+      # dest_guid_list = list(dest_guid.bytes)
+      # dest_guid_list = [71 for d in range(16)]
+      comms_cmd_sample["msg.destination"] = ['6', '7', '6', '6', '6',
+                                             '6', '6', '6', '6', '6', '6', '6', '6', '6', '6', '6']
 
       # Set Session "GUID"
       session_guid = [args.session_id for d in range(16)]

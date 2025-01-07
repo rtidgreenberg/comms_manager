@@ -76,14 +76,18 @@ class PlatformSim:
       cmd_ack_sample = dds.DynamicData(self.comms_cmd_ack_type)
 
       # Set Source GUID
-      source_guid = uuid.UUID(str(args.src_guid))
-      source_guid_list = list(source_guid.bytes)
+      # source_guid = uuid.UUID(str(args.src_guid))
+      # source_guid_list = list(source_guid.bytes)
+      source_guid_list = [5 for d in range(16)]
       cmd_ack_sample["msg.source"] = source_guid_list
 
       # Set Destination GUID
-      dest_guid = uuid.UUID(str(args.dest_guid))
-      dest_guid_list = list(dest_guid.bytes)
-      cmd_ack_sample["msg.destination"] = dest_guid_list
+      # dest_guid = uuid.UUID(str(args.dest_guid))
+      # dest_guid_list = list(dest_guid.bytes)
+
+      #dest_guid_list = ["5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5"]
+
+      cmd_ack_sample["msg.destination"] = ['5','5','5','5','5', '5','5','5','5','5','5','5','5','5','5','5']
 
       # Set Session "GUID"
       session_guid = [args.session_id for d in range(16)]
@@ -108,9 +112,11 @@ class PlatformSim:
       comms_status_sample["msg.source"] = source_guid_list
 
       # Set Destination GUID
-      dest_guid = uuid.UUID(str(args.dest_guid))
-      dest_guid_list = list(dest_guid.bytes)
-      comms_status_sample["msg.destination"] = dest_guid_list
+      # dest_guid = uuid.UUID(str(args.dest_guid))
+      # dest_guid_list = list(dest_guid.bytes)
+      # dest_guid_list = ['51' for d in range(16)]
+      comms_status_sample["msg.destination"] = [
+          '5', '5', '5', '5', '5', '5', '5', '5', '5', '5', '5', '5', '5', '5', '5', '5']
 
       # Set Session "GUID"
       session_guid = [args.session_id for d in range(16)]

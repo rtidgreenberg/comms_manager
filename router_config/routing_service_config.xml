@@ -244,7 +244,9 @@
             <allow_topic_name_filter>$(C2_TO_PLATFORM_FILTER_GUID)</allow_topic_name_filter>
             <datareader_qos base_name="comms_qos_lib::comms_qos" />
             <content_filter>
-              <expression>msg.destination = &amp;hex($(PLATFORM_GUID))</expression>
+              <!-- <expression>msg.destination = &amp;hex($(PLATFORM_GUID))</expression> -->
+              <expression>msg.destination[0] = '6' AND msg.destination[1] = '7' </expression>
+
             </content_filter>
           </input>
           <output participant="platform_participant">

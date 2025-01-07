@@ -3,7 +3,7 @@
     <types>
       <struct name="comms_base">
         <member name="source" type="byte" arrayDimensions="16"/>
-        <member name="destination" type="byte" arrayDimensions="16"/>
+        <member name="destination" type="char8" arrayDimensions="16"/>
         <member name="session_id" type="byte" arrayDimensions="16"/>
         <member name="payload" type="byte" sequenceMaxLength="1000"/>
       </struct>
