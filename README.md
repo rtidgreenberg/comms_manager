@@ -1,12 +1,12 @@
 # Overview 
-Routing service for Comms/Platform/CCS Domain to manage traffic across systems.
+Routing service for Comms/Platform/C2 Domain to manage traffic across systems.
 
 All QOS files referenced are in comms_QOS_PROFILES.xml
 
 The system has been separated into 3 domains:
 - Platform Domain (Vehicle/Platform network)
 - Comms Domain (Communications network)
-- CCS Domain (CCS network)
+- C2 Domain (C2 network)
 
 ## Directions
 Default configs are set at the top of `routing_service_config_7.3.xml` within the `<configuration_variables>` tag section.
@@ -41,22 +41,22 @@ Reference [cmd-line-parameters](https://community.rti.com/static/documentation/c
 
 ## V8
 - Add support for Command Message filtering based on destination.parentID GUID
-- Pulled in "latest" `ccs_qos` file
-- Updated `ccs_qos` to propagate Type objects (This is only between the CCS Router and the CCS apps)
-- Updated `ccs_qos` TTL to 2 (This is only between the CCS Router and the CCS apps)
-- Updated `ccs_qos` to ASYNC type discovery publishing for large types
+- Pulled in "latest" `C2_qos` file
+- Updated `C2_qos` to propagate Type objects (This is only between the C2 Router and the C2 apps)
+- Updated `C2_qos` TTL to 2 (This is only between the C2 Router and the C2 apps)
+- Updated `C2_qos` to ASYNC type discovery publishing for large types
 - Added instance resource management to `topic_assign_qos`
 
 ## V7
 - Rollback:
-	- Update discovery `initial_peers` for platform and ccs to only use loopback and shmem same as ccs
+	- Update discovery `initial_peers` for platform and C2 to only use loopback and shmem same as C2
 	- Set message_size_max to 1450. By making max message size < MTU it shifts fragmentation  
 	off of the IP stack and onto the DDS side.  
 	Will increase cpu usage but circumvents dropped IP fragment issues.
 	- Increased `receive_pool`: `buffer_size` to 65k so you could still receive large samples from other Participants.
 
 ## V6
-- Update discovery `initial_peers` for platform and ccs to only use loopback and shmem same as ccs
+- Update discovery `initial_peers` for platform and C2 to only use loopback and shmem same as C2
 - Optimized participant discovery for comms_qos (smaller messages)
 - Added register all comms types as a fallback for type propagation
 - Increased participant_liveliness_assert_period to 120 secs (This could be lengthened further)
@@ -78,8 +78,8 @@ Reference [cmd-line-parameters](https://community.rti.com/static/documentation/c
 - Converted separate _STAT and _CMD filters to a single one
 - Added automatic QOS assignment using topic_filters in `topic_assign_qos`
 - Added directions to readme
-- Moved participant_qos profiles into ccs_qos and platform_qos
-- Removed exclusive ownership qos in ccs_qos
+- Moved participant_qos profiles into C2_qos and platform_qos
+- Removed exclusive ownership qos in C2_qos
 - Uncommented register_types section to ensure type objects registered as backup
 - Updated readme to reflect changes
 - Updated diagram to reflect changes
@@ -96,10 +96,10 @@ Reference [cmd-line-parameters](https://community.rti.com/static/documentation/c
 	- Added Remote Admin QOS to comms_qos_lib and updated routing service config
 - Set default GROUP_ID to *
 - Optimized Routing Service
-	- Split configs into 2 separate domain_routes to optimize domain participant creation per CCS and Platform- (no extra entities)
+	- Split configs into 2 separate domain_routes to optimize domain participant creation per C2 and Platform- (no extra entities)
 	- Resolved large type discovery issues
-	- 	Increased the discovery type size config(type_object_max_serialized_length) for some of the larger types (*Will require QOS update on Platform/CCS*)
-	- 	Made Discovery writers asynchronous in Platform/CCS so we can get large types (*Will require QOS update on Platform/CCS*)
+	- 	Increased the discovery type size config(type_object_max_serialized_length) for some of the larger types (*Will require QOS update on Platform/C2*)
+	- 	Made Discovery writers asynchronous in Platform/C2 so we can get large types (*Will require QOS update on Platform/C2*)
 	- Removed the type registration
 		- Routing service can pick up types across the *route* so no need to register types even if propagation is disabled.
 - Updated sim components participant qos to point to comms_qos_lib participant_qos
@@ -118,7 +118,7 @@ Reference [cmd-line-parameters](https://community.rti.com/static/documentation/c
 - Updated Python Sim scripts
 - Added Python comms controller remote Admin script
 - Added Publisher/Subscriber partitions to limit Platform to Platform comms
-- Added Domain Participant partitions using GROUP_ID's to segment Platforms and CCS as needed dynamically
+- Added Domain Participant partitions using GROUP_ID's to segment Platforms and C2 as needed dynamically
 - Made the MM* filters the default
 
 
@@ -127,20 +127,20 @@ Reference [cmd-line-parameters](https://community.rti.com/static/documentation/c
 - Cannot extend the data model (issues with different vendors handling of extensibility)
 
 # Requirements
-- Platforms must be able to receive selected data from CCS [Platform to CCS filtering](#platform-to-ccs-filtering)
-- CCS must be able to receive selected data from Platforms [CCS to Platform filtering](#ccs-to-platform-filtering)
+- Platforms must be able to receive selected data from C2 [Platform to C2 filtering](#platform-to-C2-filtering)
+- C2 must be able to receive selected data from Platforms [C2 to Platform filtering](#C2-to-platform-filtering)
 - Platforms must not receive any data coming from other Platforms in default state [Platforms to Platforms isolation](#platforms-to-platforms-isolation)
 - Must be able to dynamically enable session routes for topics between platforms [Dynamically enable platform routes](#dynamically-enable-platform-routes)
 - Must be able to dynamically isolate user/discovery data between squad groups of Platforms [Dynamic grouping](#dynamic-grouping)
-- CCS must be able to communicate with all Platforms by default regardless of Platform group [Dynamic grouping](#dynamic-grouping)
+- C2 must be able to communicate with all Platforms by default regardless of Platform group [Dynamic grouping](#dynamic-grouping)
 - Commands addressed with a destination.parentID GUID need to be filtered out appropriately
 
 
 # Topics
-## Platform to CCS Topics (Total 13)
+## Platform to C2 Topics (Total 13)
 
 
-## CCS to Platform Topics (Total 11)
+## C2 to Platform Topics (Total 11)
 
 
 ## Platform to Platform topics (Add as needed)
@@ -148,20 +148,20 @@ Reference [cmd-line-parameters](https://community.rti.com/static/documentation/c
 
 
 # Unit Tests
-## Platform to CCS filtering
-Use the configuration variable `PLATFORM_TO_CCS_FILTER` in `routing_service_config_7.3.xml`
-to modify the desired topics allowed to go from the CCS to the Platform.
+## Platform to C2 filtering
+Use the configuration variable `PLATFORM_TO_C2_FILTER` in `routing_service_config_7.3.xml`
+to modify the desired topics allowed to go from the C2 to the Platform.
 
 ### Test:
-Create Platform Subscriber and CCS Publisher with defaults to simulate both systems.
-- run CCS publisher on default domain
-	- `./start_sim.sh ccs pub`
+Create Platform Subscriber and C2 Publisher with defaults to simulate both systems.
+- run C2 publisher on default domain
+	- `./start_sim.sh C2 pub`
 - run Platform subscriber on default domain
 	- `./start_sim.sh platform sub`
 - run routing service for Platform on default domain
 	- `./start_router.sh platform USV-1`
-- run routing service for CCS on default domain
-	- `./start_router.sh ccs A-UOC1`
+- run routing service for C2 on default domain
+	- `./start_router.sh C2 A-UOC1`
 
 #### Pass criteria 1 :
 Platform subscriber *SHOULD* be receiving messages.
@@ -170,40 +170,40 @@ Platform subscriber *SHOULD* be receiving messages.
 Terminal output will verify if topic qty received is equal to amount expected 
 
 #### Summary:
-Creating a Platform Subscriber sim and a CCS Publisher sim as well as the associated routing services tests the ability to route traffic between both hosts/routing services.
+Creating a Platform Subscriber sim and a C2 Publisher sim as well as the associated routing services tests the ability to route traffic between both hosts/routing services.
 
 
-## CCS to Platform filtering 
-Use the configuration variable `CCS_TO_PLATFORM_FILTER` in `routing_service_config_7.3.xml`
-to modify the desired topics allowed to go from the Platform to the CCS.
+## C2 to Platform filtering 
+Use the configuration variable `C2_TO_PLATFORM_FILTER` in `routing_service_config_7.3.xml`
+to modify the desired topics allowed to go from the Platform to the C2.
 
 ### Test:
-Create Platform Publisher and CCS Subscriber with defaults to simulate both systems
+Create Platform Publisher and C2 Subscriber with defaults to simulate both systems
 - run Platform Publisher on default domain
 	- `./start_sim.sh platform pub`
-- run CCS Subscriber on default domain
-	- `./start_sim.sh ccs sub`
+- run C2 Subscriber on default domain
+	- `./start_sim.sh C2 sub`
 - run routing service for Platform on default domain
 	- `./start_router.sh platform USV-1`
-- run routing service for CCS on default domain
-	- `./start_router.sh ccs A-UOC1`
+- run routing service for C2 on default domain
+	- `./start_router.sh C2 A-UOC1`
 
 #### Pass criteria 1:
-CCS subscriber *SHOULD* be receiving messages.
+C2 subscriber *SHOULD* be receiving messages.
 
 #### Pass criteria 2 :
 Terminal output will verify if topic qty received is equal to amount expected 
 
 #### Summary:
-Creating a Platform Publisher sim and a CCS Subscriber sim as well as the associated routing services tests the ability to route traffic between both hosts/routing services.
+Creating a Platform Publisher sim and a C2 Subscriber sim as well as the associated routing services tests the ability to route traffic between both hosts/routing services.
 
 
 ## Platforms to Platforms isolation
 - Use Publisher/Subscriber partitions for Topic group, 
-	- set Platform Subscribers Partition to "CCS"
+	- set Platform Subscribers Partition to "C2"
 	- set Platform Publishers Partition to "PLATFORM" 
-	- set CCS Subscribers Partition to "PLATFORM"
-	- set CCS Publishers Partition to "CCS"
+	- set C2 Subscribers Partition to "PLATFORM"
+	- set C2 Publishers Partition to "C2"
 
 ### Test:
 Create Platform publisher and Platform subscriber on different domains to simulate 2 different Platforms with network isolation.
@@ -221,7 +221,7 @@ USV-2 Domain 6 subscriber *SHOULD NOT* be receiving any messages.
 
 #### Summary:
 Creating 2 different platform sims with different domain ID's simulates the network isolation in a deployed environment. 
-By using Publisher/Subscriber partitions we can select our input data sources at a group level (Platforms/CCS)
+By using Publisher/Subscriber partitions we can select our input data sources at a group level (Platforms/C2)
 
 
 ## Dynamically enable platform routes
@@ -268,10 +268,10 @@ Creating specific session routes as needed and controlling them with the remote 
 ## Dynamic grouping
 - Use Participant Partitions to isolate user data/discovery traffic between platforms into GROUPS
 - Use Remote Admin controls interface to dynamically assign groups
-- Verify after Platform group change CCS can still communicate
+- Verify after Platform group change C2 can still communicate
 - Verify Platform to Platform comms are segmented by group
 
-NOTE: We are using unique Domain ID's below for the Platform and CCS publishers/subscribers to segment them at the network layer within a VM. In a deployed environment they will be physically separated and can use the same DOMAIN ID
+NOTE: We are using unique Domain ID's below for the Platform and C2 publishers/subscribers to segment them at the network layer within a VM. In a deployed environment they will be physically separated and can use the same DOMAIN ID
 
 ### Test:
 
@@ -333,19 +333,19 @@ Change the group ID for USV-6 to group 3
 Restart platform 7 subscriber and verify you can still receive ContactReportType on USV-7 subscriber
 - Both USV's will be in GROUP 3 (Verify in Admin Console in the Domain 2 logical view, click on the DP, and look at the entity info)
 
-Start up a CCS subscriber on domain 8
+Start up a C2 subscriber on domain 8
 ```
-./start_sim.sh ccs sub 8
+./start_sim.sh C2 sub 8
 ```
 
-Start a CCS Router on Domain 8 for A-UOC8
+Start a C2 Router on Domain 8 for A-UOC8
 ```
-./start_router.sh ccs A-UOC8 8
+./start_router.sh C2 A-UOC8 8
 ```
 
 #### Pass criteria 4:
 You *SHOULD* still receive messages on A-UOC8 subscriber
-- Both USV's will be in GROUP 3 (Verify in Admin Console in the Domain 2 logical view, click on the DP, and look at the entity info) and the CCS will be in the default partition of *
+- Both USV's will be in GROUP 3 (Verify in Admin Console in the Domain 2 logical view, click on the DP, and look at the entity info) and the C2 will be in the default partition of *
 
 
 Change the group ID for USV-6 to group 1
@@ -359,11 +359,11 @@ Restart platform 7 subscriber
 You *SHOULD NOT* be able to receive ContactReportType on USV-7 subscriber
 USV-6 will be in Group 1 and USV-7 will still be in Group 3 (Verify in Admin Console in the Domain 2 logical view, click on the DP, and look at the entity info)
 
-Restart CCS domain 8 subscriber 
+Restart C2 domain 8 subscriber 
 
 #### Pass criteria 6:
-You *SHOULD* be receiving topics from USV-6 on the CCS subscriber
-USV-6 will now be in Group 1 so we are verifying that after changing the Group Partition the CCS will still be able to receive data.
+You *SHOULD* be receiving topics from USV-6 on the C2 subscriber
+USV-6 will now be in Group 1 so we are verifying that after changing the Group Partition the C2 will still be able to receive data.
 
 Change the group ID for USV-6 back to group 3
 ```
@@ -387,41 +387,41 @@ You *SHOULD NOT* be receiving any topics on USV-7 subscriber
 
 
 #### Summary:
-Creating Domain Participant Partitions and controlling them with the remote admin interface allows us to control traffic/segment discovery between Groups of Platforms and possibly CCS systems in the future to scale.
+Creating Domain Participant Partitions and controlling them with the remote admin interface allows us to control traffic/segment discovery between Groups of Platforms and possibly C2 systems in the future to scale.
 
-We are only changing the Domain Participant Partition for the Domain Participant on the Comms domain i.e. the `Comms Participant` in the Routing Service. The Domain Participants that are "internal" i.e. the ones that talk to the internal Platform or CCS topics are not changed.
+We are only changing the Domain Participant Partition for the Domain Participant on the Comms domain i.e. the `Comms Participant` in the Routing Service. The Domain Participants that are "internal" i.e. the ones that talk to the internal Platform or C2 topics are not changed.
 
 
 ## Command Content Filtering
 - Use Content Filtered topics to filter commands addressed to the desired Platform GUID using the destination.parentID field.
 
 ### Test 1:
-Create a Platform subscriber and a CCS publisher on default domains
+Create a Platform subscriber and a C2 publisher on default domains
 - run Platform sim subscriber
 	- `./start_sim.sh platform sub`
-- run CCS sim publisher
-	- `./start_sim.sh ccs pub`
+- run C2 sim publisher
+	- `./start_sim.sh C2 pub`
 - run routing service for Platform USV-1
 	- `./start_router.sh platform USV-1`
-- run routing service for CCS UOC-1 
-	- `./start_router.sh ccs UOC-1 `
+- run routing service for C2 UOC-1 
+	- `./start_router.sh C2 UOC-1 `
 
 #### Pass criteria 1:
 USV-1 subscriber *SHOULD* be receiving all 11 topics.
 
 ### Test 2:
 
-Modify the GUID value in `./python_sim/ccs_pub.py` to be different.
+Modify the GUID value in `./python_sim/C2_pub.py` to be different.
 
-Create a Platform subscriber and a CCS publisher on default domains
+Create a Platform subscriber and a C2 publisher on default domains
 - run Platform sim subscriber
 	- `./start_sim.sh platform sub`
-- run CCS sim publisher
-	- `./start_sim.sh ccs pub`
+- run C2 sim publisher
+	- `./start_sim.sh C2 pub`
 - run routing service for Platform USV-1
 	- `./start_router.sh platform USV-1`
-- run routing service for CCS UOC-1 
-	- `./start_router.sh ccs UOC-1 `
+- run routing service for C2 UOC-1 
+	- `./start_router.sh C2 UOC-1 `
 
 #### Pass criteria 2:
 USV-1 subscriber *SHOULD* only be receiving 10 topics.
@@ -435,8 +435,8 @@ By using the PLATFORM_GUID value in a content filter we are able to deny message
 #### Use: 
 Set the variable PLATFORM_GUID to the desired GUID in hex format without dashes.
 
-Set the variable CCS_TO_PLATFORM_FILTER_GUID with the desired command topics that are uniquely addressed and contain the field `destination.parentID`
+Set the variable C2_TO_PLATFORM_FILTER_GUID with the desired command topics that are uniquely addressed and contain the field `destination.parentID`
 
-Set the variable CCS_TO_PLATFORM_FILTER with the rest of the topics that are being sent globally from the CCS to Platforms.
+Set the variable C2_TO_PLATFORM_FILTER with the rest of the topics that are being sent globally from the C2 to Platforms.
 
 Set the correlating Platform GUID as desired in the `destination.parentID` field.
